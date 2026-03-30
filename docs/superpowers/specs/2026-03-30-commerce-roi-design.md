@@ -73,15 +73,20 @@
 | platform_id | FK → platforms | 플랫폼 |
 | platform_product_id | VARCHAR | 마켓 상품번호 |
 | platform_product_name | VARCHAR | 마켓 상품명 |
+| seller_product_code | VARCHAR | 판매자상품코드 (크로스채널 매칭키) |
 | selling_price | DECIMAL | 마켓별 판매가 |
+| discount_price | DECIMAL | 할인가 (nullable) |
 | platform_fee_rate | DECIMAL | 마켓별 수수료율 |
-| shipping_fee | DECIMAL | 마켓별 배송비 |
+| shipping_type | VARCHAR | free / paid / conditional |
+| shipping_fee | DECIMAL | 기본 배송비 |
+| return_shipping_fee | DECIMAL | 반품 배송비 |
+| exchange_shipping_fee | DECIMAL | 교환 배송비 |
+| sale_status | VARCHAR | selling / soldout / stopped / ended |
 | matched_by | VARCHAR | 매칭 방법 (auto/ai/manual) |
-| is_active | BOOLEAN | 판매 중 여부 |
 
 ### 3.3 주문 & 정산
 
-**orders**
+**orders** (개별 주문 단위 — 쿠팡, 11번가 등 건별 데이터 제공 채널용)
 | 필드 | 타입 | 설명 |
 |------|------|------|
 | id | PK | |
@@ -92,6 +97,22 @@
 | sale_price | DECIMAL | 판매가 |
 | shipping_fee | DECIMAL | 배송비 |
 | platform_fee | DECIMAL | 플랫폼 수수료 |
+
+**sales_summary** (기간 합산 단위 — 네이버 상품성과 등 합산 데이터 제공 채널용)
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | PK | |
+| platform_product_id | FK → platform_products | 마켓 상품 연결 |
+| period_start | DATE | 집계 시작일 |
+| period_end | DATE | 집계 종료일 |
+| total_quantity | INTEGER | 기간 총 판매수량 |
+| total_revenue | DECIMAL | 기간 총 결제금액 |
+| total_refund_amount | DECIMAL | 기간 총 환불금액 |
+| refund_count | INTEGER | 환불 건수 |
+| coupon_seller | DECIMAL | 판매자 부담 쿠폰 합계 |
+| coupon_order | DECIMAL | 주문 쿠폰 합계 |
+
+> 수익 계산 시 orders와 sales_summary를 통합 조회. 채널에 따라 둘 중 하나에 데이터가 적재됨.
 
 **settlements** (마켓별 정산 추적)
 | 필드 | 타입 | 설명 |
@@ -158,13 +179,34 @@
 |------|------|------|
 | id | PK | |
 | platform_id | FK → platforms | 광고 플랫폼 |
-| platform_product_id | FK → platform_products | 마켓 상품번호로 매칭 |
+| platform_product_id | FK → platform_products (nullable) | 상품번호로 직접 매칭 가능한 경우 |
 | campaign_name | VARCHAR | 광고 캠페인명 |
-| spend | DECIMAL | 광고비 |
+| ad_group | VARCHAR (nullable) | 광고그룹 |
+| keyword | VARCHAR (nullable) | 키워드 (쇼핑검색 등 없는 경우 null) |
+| ad_type | VARCHAR (nullable) | 광고유형 (파워링크/쇼핑검색/파워컨텐츠 등) |
+| device | VARCHAR (nullable) | PC / 모바일 |
+| spend | DECIMAL | 광고비 (VAT 포함 여부는 platform 설정에 따름) |
 | impressions | INTEGER | 노출수 |
 | clicks | INTEGER | 클릭수 |
-| conversions | INTEGER | 전환수 |
+| direct_conversions | INTEGER | 직접 전환수 |
+| indirect_conversions | INTEGER | 간접 전환수 |
+| conversion_revenue | DECIMAL | 전환 매출액 |
+| avg_rank | DECIMAL (nullable) | 평균 노출 순위 |
 | ad_date | DATE | 광고 집행일 |
+
+**ad_campaign_product_mapping** (캠페인명 → 상품 매핑 — 광고에 상품번호 없는 경우)
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| id | PK | |
+| platform_id | FK → platforms | 광고 플랫폼 |
+| campaign_name | VARCHAR | 캠페인명 패턴 (예: "◆바디트리머") |
+| product_id | FK → products | 매핑 상품 |
+| allocation_method | VARCHAR | single / equal / revenue_ratio |
+
+> 하나의 캠페인이 여러 상품에 매핑 가능. allocation_method에 따라 광고비 배분:
+> - single: 단일 상품에 100% 배분
+> - equal: 매핑된 상품에 균등 배분
+> - revenue_ratio: 매출 비율로 배분
 
 **ad_analysis_logs** (AI 광고 개선안 저장)
 | 필드 | 타입 | 설명 |
@@ -184,24 +226,40 @@
 |------|------|------|
 | id | PK | |
 | platform_id | FK → platforms | 플랫폼 |
-| data_type | VARCHAR | order / ad / settlement |
+| data_type | VARCHAR | order / sales_summary / ad / settlement |
 | column_mapping | JSON | 컬럼 매핑 정보 |
+| parsing_rules | JSON | 파싱 규칙 (skip_rows, date_format, vat_included, null_values 등) |
 | file_type | VARCHAR | xlsx / csv |
 | notes | TEXT | 비고 |
 
 column_mapping 예시:
 ```json
-// 쿠팡 주문
+// 쿠팡 주문 (data_type: order)
 {"order_date": "주문일시", "product_id": "노출상품ID", "quantity": "수량", "price": "판매가", "shipping": "배송비"}
 
-// 네이버 주문
-{"order_date": "결제일", "product_id": "상품번호", "quantity": "수량", "price": "결제금액", "shipping": "배송비"}
+// 네이버 상품성과 (data_type: sales_summary)
+{"product_id": "상품번호", "total_quantity": "결제상품수량", "total_revenue": "결제금액", "total_refund_amount": "환불금액", "refund_count": "환불수량", "coupon_seller": "상품쿠폰합계", "coupon_order": "주문쿠폰합계"}
 
-// 쿠팡 광고
+// 쿠팡 광고 (data_type: ad)
 {"date": "날짜", "product_id": "광고상품ID", "spend": "광고비", "clicks": "클릭수", "impressions": "노출수"}
 
-// 메타 광고
+// 네이버 광고 (data_type: ad)
+{"date": "일별", "campaign": "캠페인", "ad_group": "광고그룹", "keyword": "키워드", "ad_type": "캠페인유형", "spend": "총비용(VAT포함,원)", "clicks": "클릭수", "impressions": "노출수", "direct_conversions": "직접전환수", "indirect_conversions": "간접전환수", "conversion_revenue": "전환매출액(원)", "avg_rank": "평균노출순위"}
+
+// 메타 광고 (data_type: ad)
 {"date": "Date", "campaign": "Campaign Name", "spend": "Amount Spent", "clicks": "Link Clicks", "impressions": "Impressions"}
+```
+
+parsing_rules 예시:
+```json
+// 네이버 광고
+{"skip_rows": 1, "date_format": "YYYY.MM.DD.", "vat_included": true, "null_values": ["-"], "notes": "첫 행은 제목행(계정 보고서...), 날짜 끝 마침표 제거 필요, 쇼핑검색 키워드는 - 표시"}
+
+// 네이버 상품성과
+{"skip_rows": 0, "date_format": null, "period_from_filename": true, "notes": "기간 합산 데이터, 개별 주문일 없음. 같은 상품ID에 상품명 변경 이력 있을 수 있음 — 최신 상품명 우선"}
+
+// 쿠팡
+{"skip_rows": 0, "date_format": "YYYY-MM-DD", "vat_included": false}
 ```
 
 ### 3.7 변경 이벤트 & 데이터 누적
@@ -285,21 +343,40 @@ column_mapping 예시:
 ### 공식
 
 ```
-순이익 = 매출 - 원가 - 플랫폼수수료 - 배송비 - 광고비 - 마케팅비 - 커스텀비용
+순이익 = (매출 - 환불금액)
+       - 원가 × (판매수량 - 환불수량)
+       - 플랫폼수수료
+       - 배송비
+       - 쿠폰부담금 (판매자쿠폰 + 주문쿠폰)
+       - 환불배송비 (반품배송비 × 환불건수)
+       - 광고비
+       - 마케팅비
+       - 커스텀비용
 ```
 
 ### 상품별 수익 계산 항목
 
+**매출 데이터** (채널에 따라 orders 또는 sales_summary에서 조회)
+
+| 항목 | orders 채널 (쿠팡 등) | sales_summary 채널 (네이버 등) |
+|------|----------------------|------------------------------|
+| 매출 | sale_price × quantity 합산 | total_revenue |
+| 환불금액 | (별도 반품 데이터) | total_refund_amount |
+| 환불수량 | (별도 반품 데이터) | refund_count |
+| 쿠폰부담금 | (별도 정산 데이터) | coupon_seller + coupon_order |
+
+**비용 항목**
+
 | 항목 | 출처 |
 |------|------|
-| 매출 | orders.sale_price x quantity |
-| 원가 | products.base_cost x quantity |
-| 플랫폼 수수료 | 매출 x platform_fee_rate |
-| 배송비 | orders.shipping_fee |
-| 광고비 | ad_data에서 해당 상품 + 기간 합산 |
+| 원가 | products.base_cost × (판매수량 - 환불수량) |
+| 플랫폼 수수료 | 매출 × platform_fee_rate |
+| 배송비 | orders.shipping_fee 또는 platform_products.shipping_fee 기준 |
+| 환불 배송비 | platform_products.return_shipping_fee × 환불건수 |
+| 광고비 | ad_data에서 해당 상품 + 기간 합산 (직접매칭 + 캠페인매핑 배분) |
 | 마케팅비 (직접) | marketing_costs에서 product_id 직접 연결분 |
 | 마케팅비 (캠페인 배분) | 캠페인 총비용 / 캠페인 내 상품 매출 비율로 배분 |
-| 마케팅비 (매출비율) | 월 전체 비용 x 해당 상품 매출 비중 |
+| 마케팅비 (매출비율) | 월 전체 비용 × 해당 상품 매출 비중 |
 | 커스텀 비용 | variable_costs에서 해당 상품 + 기간 합산 |
 
 ### 리포트
@@ -363,7 +440,10 @@ column_mapping 예시:
 ## 8. 데이터 누적 관리
 
 - 모든 데이터는 삭제하지 않고 누적 저장
-- 업로드 시 기존 데이터와 병합 (같은 플랫폼 + 같은 날짜 + 같은 주문번호 = 중복 스킵)
+- 업로드 시 기존 데이터와 병합
+  - orders: 같은 플랫폼 + 같은 주문번호 = 중복 스킵
+  - sales_summary: 같은 플랫폼 + 같은 상품 + 같은 기간 = 덮어쓰기 (최신 데이터 우선)
+  - ad_data: 같은 플랫폼 + 같은 캠페인 + 같은 날짜 + 같은 키워드 = 덮어쓰기
 - 과거 데이터 수정 시 원본 보존 + 수정 이력 기록
 - 업로드 이력 관리 (upload_history)
 
