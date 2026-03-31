@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     secret_key: str = "dev-secret-key-change-in-production"
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 480
+    anthropic_api_key: str = ""  # Set via APP_ANTHROPIC_API_KEY env var
 
     model_config = {"env_prefix": "APP_"}
 

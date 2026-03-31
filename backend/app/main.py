@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.routers import ads, auth, costs, events, platforms, products, reports, upload
+from app.routers import ads, analysis, auth, costs, events, platforms, products, reports, upload
 
 app = FastAPI(title="Commerce ROI", version="0.1.0")
 
@@ -21,6 +21,7 @@ app.include_router(costs.router)
 app.include_router(ads.router)
 app.include_router(events.router)
 app.include_router(reports.router)
+app.include_router(analysis.router)
 
 
 @app.get("/health")
