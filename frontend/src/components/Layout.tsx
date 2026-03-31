@@ -7,6 +7,7 @@ import {
   FundOutlined,
   CalendarOutlined,
   BarChartOutlined,
+  RobotOutlined,
   LogoutOutlined,
 } from '@ant-design/icons';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
@@ -21,6 +22,7 @@ const menuItems = [
   { key: '/ads', icon: <FundOutlined />, label: '광고 분석' },
   { key: '/events', icon: <CalendarOutlined />, label: '변경 이벤트' },
   { key: '/reports', icon: <BarChartOutlined />, label: '수익 리포트' },
+  { key: '/analysis', icon: <RobotOutlined />, label: 'AI 분석' },
 ];
 
 export default function AppLayout() {

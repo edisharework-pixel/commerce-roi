@@ -8,6 +8,7 @@ import CostsPage from './pages/CostsPage';
 import AdsPage from './pages/AdsPage';
 import EventsPage from './pages/EventsPage';
 import ReportsPage from './pages/ReportsPage';
+import AnalysisPage from './pages/AnalysisPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('token');
@@ -28,6 +29,7 @@ export default function App() {
           <Route path="ads" element={<AdsPage />} />
           <Route path="events" element={<EventsPage />} />
           <Route path="reports" element={<ReportsPage />} />
+          <Route path="analysis" element={<AnalysisPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
