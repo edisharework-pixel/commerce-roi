@@ -1,0 +1,43 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(source .venv/Scripts/activate)",
+      "Bash(pip install:*)",
+      "Bash(python -c \"from app.main import app; print\\(f''FastAPI app: {app.title} v{app.version}''\\)\")",
+      "Bash(git init:*)",
+      "Bash(git:*)",
+      "Bash(python -c \"import pytest_asyncio; print\\(pytest_asyncio.__version__\\)\")",
+      "Bash(pip show:*)",
+      "Bash(python -m pytest tests/test_models/test_user.py -v)",
+      "Bash(python -m pytest tests/test_models/test_platform.py -v)",
+      "Bash(python -m pytest tests/test_models/test_product.py -v)",
+      "Bash(python -m pytest tests/test_models/test_sales.py -v)",
+      "Bash(python -m pytest tests/test_models/test_cost.py -v)",
+      "Bash(python -m pytest tests/test_models/test_ad.py -v)",
+      "Bash(python -m pytest tests/ -v)",
+      "Bash(docker ps:*)",
+      "Bash(alembic init:*)",
+      "Bash(alembic revision:*)",
+      "Bash(docker exec:*)",
+      "Bash(python -c \":*)",
+      "Bash(alembic upgrade:*)",
+      "Bash(python -m pytest tests/test_seed.py -v)",
+      "Bash(python -m pytest tests/ -v --tb=short)",
+      "Bash(python -m pytest tests/test_parsers/test_adapters/ -v)",
+      "Bash(source backend/.venv/Scripts/activate)",
+      "Bash(python -m pytest backend/tests/test_matching/ -v)",
+      "Bash(python -m pytest backend/tests/test_parsers/test_pipeline.py -v)",
+      "Bash(python -m pytest backend/tests/test_services/ -v)",
+      "Bash(python -m pytest backend/tests/ -v)",
+      "Bash(python -m pytest tests/test_services/test_profit_calculator.py -v)",
+      "Bash(python -m pytest -v)",
+      "Bash(npm create:*)",
+      "Bash(npx tsc:*)",
+      "Bash(npm run:*)",
+      "Bash(cd:*)",
+      "Bash(netstat -ano)",
+      "Bash(taskkill //F //PID 50752)",
+      "Bash(taskkill //F //PID 178768)"
+    ]
+  }
+}
