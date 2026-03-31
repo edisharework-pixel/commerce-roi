@@ -16,3 +16,16 @@ async def db_session():
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
     await engine.dispose()
+
+
+@pytest_asyncio.fixture
+async def override_db(db_session):
+    from app.database import get_db
+    from app.main import app
+
+    async def _override():
+        yield db_session
+
+    app.dependency_overrides[get_db] = _override
+    yield
+    app.dependency_overrides.clear()
