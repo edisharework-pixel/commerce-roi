@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage';
 import AppLayout from './components/Layout';
 import DashboardPage from './pages/DashboardPage';
+import ProductsPage from './pages/ProductsPage';
+import UploadPage from './pages/UploadPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('token');
@@ -16,8 +18,8 @@ export default function App() {
         <Route path="/login" element={<LoginPage />} />
         <Route path="/" element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
           <Route index element={<DashboardPage />} />
-          <Route path="products" element={<div>상품 관리 (준비중)</div>} />
-          <Route path="upload" element={<div>업로드 (준비중)</div>} />
+          <Route path="products" element={<ProductsPage />} />
+          <Route path="upload" element={<UploadPage />} />
           <Route path="costs" element={<div>비용 관리 (준비중)</div>} />
           <Route path="ads" element={<div>광고 분석 (준비중)</div>} />
           <Route path="events" element={<div>변경 이벤트 (준비중)</div>} />
