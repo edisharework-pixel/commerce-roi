@@ -4,6 +4,10 @@ import AppLayout from './components/Layout';
 import DashboardPage from './pages/DashboardPage';
 import ProductsPage from './pages/ProductsPage';
 import UploadPage from './pages/UploadPage';
+import CostsPage from './pages/CostsPage';
+import AdsPage from './pages/AdsPage';
+import EventsPage from './pages/EventsPage';
+import ReportsPage from './pages/ReportsPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const token = localStorage.getItem('token');
@@ -20,10 +24,10 @@ export default function App() {
           <Route index element={<DashboardPage />} />
           <Route path="products" element={<ProductsPage />} />
           <Route path="upload" element={<UploadPage />} />
-          <Route path="costs" element={<div>비용 관리 (준비중)</div>} />
-          <Route path="ads" element={<div>광고 분석 (준비중)</div>} />
-          <Route path="events" element={<div>변경 이벤트 (준비중)</div>} />
-          <Route path="reports" element={<div>수익 리포트 (준비중)</div>} />
+          <Route path="costs" element={<CostsPage />} />
+          <Route path="ads" element={<AdsPage />} />
+          <Route path="events" element={<EventsPage />} />
+          <Route path="reports" element={<ReportsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
